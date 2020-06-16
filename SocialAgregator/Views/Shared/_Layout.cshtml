@@ -1,0 +1,70 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>@ViewBag.Title</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    <style>
+        .nav li{
+            padding: 6px 8px 6px 16px;
+            text-decoration: none;
+            font-size: 20px;
+            color: #000000;
+           
+            display: block;
+        }
+
+        .nav ul li:hover {
+            color: #f1f1f1;
+            cursor:pointer;
+        }
+
+        .sidebar {
+            height: 100%;
+            width: 190px;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 0;
+            background-color: cornflowerblue;
+            overflow-x: hidden;
+            padding-top: 5px;
+        }
+        .navbut{
+            margin-left:5px;
+        }
+    </style>
+
+</head>
+<body>
+
+
+    <div class="container body-content">
+        <div class="jumbotron" style="text-align:center;padding:15px;background-color:lightsteelblue">
+            <h2>Social Agregator</h2>
+        </div>
+        <nav class="navbar navbar-light bg-light" style="padding-left:15px; padding-right:15px;">
+            <div class="row">
+                <div class="col">
+                    <button id="getFBPosts" type="button" class="btn btn-outline-dark" onclick="getFbPosts();">Page Posts fb</button>
+                    <button id="getFBPosts" type="button" class="navbut btn btn-outline-dark pull-right" onclick="getTwitterStatus();" /> see Timeline </button>
+                    <button id="getFBPosts" type="button" class="navbut btn btn-outline-dark pull-right" onclick="getTwitterFriends();" />See Friends</button>
+                    <button id="getFBPosts" type="button" class="navbut btn btn-outline-dark pull-right" onclick="getTwitterFav();" /> See Favourites</button>
+                    <button id="getFBPosts" type="button" class="navbut btn btn-outline-dark pull-right" onclick="getFollower();" />See Followers </button>
+                </div>
+            </div>
+
+        </nav>
+        @RenderBody()
+        <hr />
+
+    </div>
+
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @RenderSection("scripts", required: false)
+</body>
+</html>

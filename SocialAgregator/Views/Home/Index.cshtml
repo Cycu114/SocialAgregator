@@ -1,0 +1,267 @@
+﻿<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_GB/sdk.js#xfbml=1&version=v7.0&appId=282671796252541&autoLogAppEvents=1"></script>
+<div class="row">
+    <div class="col-md-6">
+        <div style="height:600px" id="facebookDiv">
+            <fb:login-button scope="public_profile,email" class="btn" onlogin="checkLoginState();" style="float:left"></fb:login-button>
+            <div id="status">
+            </div>
+            <input id="fbLogoff" class="btn" type="button" style="background-color:" value="Log Out" />
+            <div class="clearfix"></div>
+
+            <div id="allOutputs">
+                <div id="facebookinfo" class="dataHere" style="margin-left:40px">
+                </div>
+                <div id="commentDiv"></div>
+            </div>
+        </div>
+        <div class="vl"></div>
+    </div>
+    <div class="col-md-6">
+        <div style="height:600px" id="twitterDiv" class="dataHere">
+        </div>
+        <div id="postDiv"></div>
+    </div>
+</div>
+<p id="token" hidden></p>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            if (sessionStorage.getItem('accessToken') == null) {
+                window.location.href = '@Url.Action("Login","Home")';
+                $('#Login').html('@Html.ActionLink("Log in", "Login", "Home", new { area = "" }, null)');
+                $('#register').html('@Html.ActionLink("Register", "Register", "Home", new { area = "" }, null)');
+            } else {
+                $('#token').html(sessionStorage.getItem('accessToken'));
+                $('#register').html('');
+                $('#Login').html('');
+            }
+            $('#btnLogoff').click(function () {
+                sessionStorage.removeItem('accessToken');
+                sessionStorage.removeItem('username');
+                 FB.logout(function(response) {
+                        document.location.reload();
+                    });
+                window.location.href = '@Url.Action("Login","Home")';
+            });
+            $('#fbLogoff').click(function () {
+                FB.getLoginStatus(function(response) {
+                if (response && response.status === 'connected') {
+                    FB.logout(function(response) {
+                        document.location.reload();
+                    });
+                    }
+                });
+            });
+        });
+
+        function statusChangeCallback(response) {  
+            console.log('statusChangeCallback');
+            console.log(response);                   
+            if (response.status === 'connected') {   
+                testAPI();
+                $('#token').html(response.authResponse.accessToken);
+                $('#fbLogoff').css('visibility', 'visible');
+                console.log('logged in and authenticated');
+
+                var acc = $('#token').text();
+                
+                $.ajax({
+                    type: 'GET',
+                    url: '/PagePosts/getPageAccessPoint',
+                    data: { accessToken: acc },
+                    dataType: 'json',
+                    success: function (data) { 
+                        console.log(data.dataList[0].access_token)
+                        $('#token').html(data.dataList[0].access_token)
+
+
+                    }
+                });
+
+            } else {                                
+                document.getElementById('status').innerHTML = 'Please log ' +
+                    'into this webpage.';
+                document.getElementById('fbLogoff').style.visibility = 'hidden';
+                console.log('logged in and authenticated');
+            }
+
+
+
+
+
+        }
+        
+
+        function checkLoginState() {               
+            FB.getLoginStatus(function (response) {   
+                statusChangeCallback(response);
+            });
+        }
+
+        window.fbAsyncInit = function () {
+            FB.init({
+                appId: '282671796252541',
+                cookie: true,                    
+                xfbml: true,                    
+                version: 'v7.0'           
+            });
+
+            FB.getLoginStatus(function (response) {   
+                statusChangeCallback(response);        
+            });
+        };
+
+        (function (d, s, id) {                      
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) return;
+            js = d.createElement(s); js.id = id;
+            js.src = "https://connect.facebook.net/en_US/sdk.js";
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+
+        function testAPI() {                      
+            console.log('Welcome!  Fetching your information.... ');
+            FB.api('/me', function (response) {
+                console.log('Successful login for: ' + response.name);
+                document.getElementById('status').innerHTML =
+                    'Thanks for logging in, ' + response.name + '!';
+            });
+        }
+        function getpagetoken() {
+            var acc = $('#token').text();
+            console.log(acc);
+           
+            $.ajax({
+                type: 'GET',
+                url: '/PagePosts/getPageAccessPoint',
+                data: { accessToken: acc },
+                dataType: 'json',
+                success: function (data) { 
+                    console.log(data.dataList[0].access_token)
+                    return(data.dataList[0].access_token) 
+                    
+
+                }
+            });
+        }
+
+        function getFbPosts() {
+            
+            var acc = $('#token').text();
+           
+                $('#commentDiv').html('');
+           
+            $.ajax({
+                type: 'GET',
+                url: '/PagePosts/getPosts',
+                data: { access_token: acc  },
+                dataType: 'json',
+                success: function (data) { 
+                    $('#facebookinfo').html('<table class="table" id="tPosts"><tr><td><b>Time</b></td>'+
+                        '<td><b> Post</b></td></tr></table>');
+                    for (var i = 0; i < data.dataList.length; i++) {
+                        $('#tPosts').append('<tr><td>' + data.dataList[i].created_time + '</td><td>' + data.dataList[i].message + '</td></tr>');
+                    }
+                    
+                }
+            });
+        }
+       
+        function getTwitterStatus() {
+            $.ajax({
+                type: 'GET',
+                url: '/Twitter/getTimeline',
+                dataType: 'json',
+                success: function (data) { 
+                    $('#twitterDiv').html('<table class="table" id="twPosts"><tr><td><b>Time</b></td>' +
+                        '<td><b> Feed</b></td></tr></table>');
+                    console.log(data.dataList[0].created_at)
+                    for (var i = 0; i < data.dataList.length; i++) {
+                        $('#twPosts').append('<tr><td>' + data.dataList[i].created_at + '</td><td>' + data.dataList[i].text + '</td></tr>');
+                    }
+                }
+            });
+        }
+
+        function getTwitterFav() {
+            $.ajax({
+                type: 'GET',
+                url: '/Twitter/getfavourites',
+                dataType: 'json',
+                success: function (data) { 
+                    $('#twitterDiv').html('<table class="table" id="twPosts"><tr><td><b>Time</b></td>' +
+                        '<td><b> Feed</b></td></tr></table>');
+                    console.log(data.dataList[0].created_at)
+                    for (var i = 0; i < data.dataList.length; i++) {
+                        $('#twPosts').append('<tr><td>' + data.dataList[i].created_at + '</td><td>' + data.dataList[i].text + '</td></tr>');
+                    }
+                }
+            });
+        }
+
+        function getTwitterFriends() {
+            $.ajax({
+                type: 'GET',
+                url: '/twitter/getFriends',
+                dataType: 'json',
+                success: function (data) {
+                    $('#twitterDiv').html('<table class="table" id="twPosts"><tr><td><b>Friends/followed</b></td></table>');
+                    for (var i = 0; i < data.dataList.length; i++) {
+                        $('#twPosts').append('<tr><td>' + data.dataList[i].name + '</td></tr>');
+                    }
+                }
+            });
+        }
+
+        function getFollower() {
+            $.ajax({
+                type: 'GET',
+                url: '/twitter/getFollowers',
+                dataType: 'json',
+                success: function (data) { 
+                    $('#twitterDiv').html('<table class="table" id="twPosts"><tr><td><b>Friends/followed</b></td></table>');
+                    for (var i = 0; i < data.dataList.length; i++) {
+                        $('#twPosts').append('<tr><td>' + data.dataList[i].name + '</td></tr>');
+                    }
+                }
+            });
+        }
+        function PostTwitter() {
+
+            $('#postDiv').html('');
+            $('#postDiv').append('<input type="text" id="twittermsg" class="form-control" style="margin-top:10px;" placeholder="Write your comment here..."/>' +
+                '<input type="button" style="margin-top:5px;" onclick="postTwitter();" value="Post!" />');
+        }
+
+    </script>
+    <style>
+        .vl {
+            border-left: 2px solid green;
+            height: 550px;
+            float: right;
+            margin-top: -550px;
+        }
+        .dataHere {
+            width: 80%;
+            height: 400px;
+            border: 1px solid #cccccc;
+            background-color: lightsteelblue;
+            border-radius: 4px;
+            margin-top: 20px;
+            overflow: auto;
+        }
+
+        .dataHere2 {
+            width: 80%;
+            height: 400px;
+            border: 1px solid #cccccc;
+            background-color: lightsteelblue;
+            border-radius: 4px;
+            margin-top: 20px;
+            overflow: auto;
+        }
+    </style>
+
+}
